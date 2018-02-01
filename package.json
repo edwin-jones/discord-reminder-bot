@@ -1,0 +1,26 @@
+{
+  "name": "catbot",
+  "version": "1.0.2",
+  "description": "a simple bot about cats for discord",
+  "main": "catbot.js",
+  "scripts": {
+    "start": "node catbot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Edwin Jones",
+  "license": "MIT",
+  "dependencies": {
+    "debug": "^3.1.0",
+    "discord.io": "github:woor/discord.io#gateway_v6",
+    "request": "^2.82.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edwinj85/catbot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/edwinj85/catbot/issues"
+  },
+  "homepage": "https://github.com/edwinj85/catbot#readme"
+}

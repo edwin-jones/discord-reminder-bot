@@ -6,7 +6,8 @@ const discord = require('discord.io');
 const log = require('debug')('catbot')
 const request = require('request');
 
-const apiToken = process.env.DISCORD_API_TOKEN || "NOT_SET";
+const stats = require('./stats');
+const auth = require('./auth.json'); //you need to make this file yourself!
 
 function onError(bot, channelID) {
     bot.sendMessage(
@@ -30,6 +31,7 @@ function getCatFact(bot, channelID) {
                 message: body.fact
             });
 
+        stats.incrementStat("catfacts");
         log("catfact command completed");
     });
 }
@@ -54,15 +56,28 @@ function getCatPic(bot, channelID, userID) {
                 }
         });
 
+        stats.incrementStat("catpics");
         log("catpic command completed");
     });
 
 }
 
+//use this function to stroke catbot!
+function stroke(bot, channelID, userID) {
+    
+    bot.sendMessage(
+        {
+            to: channelID,
+            message: "**puuurrrrrrrrrr!** Thank you <@" + userID + "> **:3**"
+        });
+    
+        stats.incrementStat("catstrokes");
+}
+
 // Initialize Discord Bot
 var bot = new discord.Client(
     {
-        token: apiToken,
+        token: auth.token,
         autorun: true
     });
 
@@ -96,7 +111,8 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 bot.sendMessage(
                     {
                         to: channelID,
-                        message: "you can ask me for a random cat fact with **!catfact**, picture with **!catpic** or you can stroke me with **!stroke** - I do love to be stroked **:3**"
+                        message: "You can ask me for a random cat fact with **!catfact**, picture with **!catpic** or you can stroke me with **!stroke** - I do love to be stroked **:3**\n" +
+                                 "I can also provide interesting stats with the **!catstats** command."
                     });
 
                 log("help command executed");
@@ -113,13 +129,13 @@ bot.on('message', function (user, userID, channelID, message, evt) {
                 break;
 
             case 'stroke':
-                bot.sendMessage(
-                    {
-                        to: channelID,
-                        message: "**puuurrrrrrrrrr!** Thank you <@" + userID + "> **:3**"
-                    });
-
+                stroke(bot, channelID, userID);
                 log("stroke command executed");
+                break;
+
+            case 'catstats':
+                stats.printStats(bot, channelID);
+                log("catstats command executed");
                 break;
         }
     }

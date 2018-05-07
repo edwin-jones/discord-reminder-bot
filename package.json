@@ -12,7 +12,9 @@
   "dependencies": {
     "debug": "^3.1.0",
     "discord.io": "github:woor/discord.io#gateway_v6",
-    "request": "^2.82.0"
+    "mongodb": "^3.0.7",
+    "request": "^2.82.0",
+    "string-builder": "^0.1.4"
   },
   "devDependencies": {},
   "repository": {

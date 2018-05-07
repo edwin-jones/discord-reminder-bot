@@ -1,3 +1,5 @@
+'use strict';
+
 //dependencies
 const log = require('debug')('stats');
 const client = require('mongodb').MongoClient;
@@ -9,75 +11,75 @@ const dbName = 'catbot';
 const collectionName = 'catstats';
 
 
-//Use this function to incremement a stat
+//Use this function to incremement a stat. Returns a promise.
 exports.incrementStat = (name) => {
 
-    client.connect(auth.mongourl, function(err, client) {
-    
-        if (err)
-        {
-            log("failed to connect to mongodb: " + err);
-            return;
-        }
+    return new Promise((resolve, reject) => {
 
-        log("connected to mongodb");
-        
-        let database = client.db(dbName);
-        let catstats = database.collection(collectionName);
+        client.connect(auth.mongourl, function (err, client) {
 
-        catstats.update(
-            { name: name },
-            { $inc: { count: 1 } }
-        );
-    
-        client.close();
-
-        log(`incremented stat ${name} successfully`);
-
-  });  
-}
-
-
-//use this function to print stats
-exports.printStats = (bot, channelID) => {
-
-    client.connect(auth.mongourl, function(err, client) {
-    
-        if (err)
-        {
-            log("failed to connect to mongodb: " + err);
-            return;
-        }
-
-        log("connected to mongodb");
-        
-        let database = client.db(dbName);
-        let catstats = database.collection(collectionName);
-
-        var sb = new StringBuilder();
-        catstats.find({}).toArray(function(err, result) {
-
-            if (err)
-            {
-                log("failed to find documents: " + err);
+            if (err) {
+                log("failed to connect to mongodb: " + err);
+                reject(err);
                 return;
             }
 
-            sb.appendLine("So far I have:")
+            log("connected to mongodb");
 
-            for(var i in result)
-            {
-                sb.appendLine(`\t${result[i].prefix} **${result[i].count}** ${result[i].suffix}`);  
+            let database = client.db(dbName);
+            let catstats = database.collection(collectionName);
+
+            catstats.update(
+                { name: name },
+                { $inc: { count: 1 } }
+            );
+
+            client.close();
+
+            log(`incremented stat ${name} successfully`);
+
+            resolve();
+        });
+    });
+}
+
+//use this function to get stats. Returns a promise of a string (to send to chat)
+exports.getStats = () => {
+
+    return new Promise((resolve, reject) => {
+
+        client.connect(auth.mongourl, function (err, client) {
+
+            if (err) {
+                log("failed to connect to mongodb: " + err);
+                reject(err);
+                return;
             }
 
-            bot.sendMessage(
-                {
-                    to: channelID,
-                    message: sb.toString()
-                });
-            
-          });
+            log("connected to mongodb");
 
-        client.close();
-    });  
+            let database = client.db(dbName);
+            let catstats = database.collection(collectionName);
+
+            var sb = new StringBuilder();
+            catstats.find({}).toArray(function (err, result) {
+
+                if (err) {
+                    log("failed to find documents: " + err);
+                    reject(err);
+                    return;
+                }
+
+                sb.appendLine("So far I have:")
+
+                for (var i in result) {
+                    sb.appendLine(`\t${result[i].prefix} **${result[i].count}** ${result[i].suffix}`);
+                }
+
+                resolve(sb.toString());
+            });
+
+            client.close();
+        });
+    });
 }

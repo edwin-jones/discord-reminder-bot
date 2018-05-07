@@ -17,19 +17,41 @@ const helpmsg =
     "I can also provide interesting stats with the **!catstats** command.";
 
 
+//send a message to discord
 function sendMessage(bot, channelID, message) {
 
     return new Promise((resolve, reject) => {
+
         bot.sendMessage(
             {
                 to: channelID,
                 message: message
-            });
 
-        resolve();
+            }, resolve);
     });
 }
 
+//send an image (via a url) to discord
+function sendImage(bot, channelID, url) {
+
+    return new Promise((resolve, reject) => {
+
+        bot.sendMessage(
+            {
+                to: channelID,
+                embed:
+                    {
+                        color: 4954687, //RGB value cast from hex to int. This is green!
+                        image:
+                            {
+                                url: url
+                            }
+                    }
+            }, resolve);
+    });
+}
+
+//error handler
 async function onError(bot, channelID) {
 
     log(`Error: ${err}`);
@@ -66,20 +88,9 @@ async function getCatPic(bot, channelID, userID) {
     }
 
     let response = await request(options);
-
-    bot.sendMessage({
-        to: channelID,
-        embed:
-            {
-                color: 4954687, //RGB value cast from hex to int. This is green!
-                image:
-                    {
-                        url: response.href
-                    }
-            }
-    });
-
+    await sendImage(bot, channelID, response.href)
     await stats.incrementStat("catpics");
+
     log("catpic command completed");
 }
 
@@ -100,6 +111,7 @@ var bot = new discord.Client(
 
 //log when the bot is ready
 bot.on('ready', function (evt) {
+
     log('Connected');
     log('Logged in as: ');
     log(bot.username + ' - (' + bot.id + ')');
@@ -107,11 +119,12 @@ bot.on('ready', function (evt) {
 
 //handle disconnects by auto reconnecting
 bot.on('disconnect', function (erMsg, code) {
+
     log(`----- Bot disconnected from Discord with code ${code} for reason: ${erMsg} -----`);
     bot.connect();
 })
 
-//log when the bot get a message. NOTE: discord supports markdown syntax.
+//decide what to do when the bot get a message. NOTE: discord supports markdown syntax.
 bot.on('message', async function (user, userID, channelID, message, evt) {
 
     try {

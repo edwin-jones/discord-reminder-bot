@@ -28,7 +28,7 @@ exports.incrementStat = (name) => {
         catstats.update(
             { name: name },
             { $inc: { count: 1 } }
-        )
+        );
     
         client.close();
 

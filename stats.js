@@ -29,7 +29,7 @@ exports.incrementStat = (name) => {
             let database = client.db(dbName);
             let catstats = database.collection(collectionName);
 
-            catstats.update(
+            catstats.updateOne(
                 { name: name },
                 { $inc: { count: 1 } }
             );

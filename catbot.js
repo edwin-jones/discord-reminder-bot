@@ -5,7 +5,7 @@
 
 //dependencies
 const discord = require('discord.js');
-const log = require('debug')('catbot')
+const log = require('debug')('catbot');
 const request = require('request-promise');
 
 const stats = require('./stats');
@@ -25,6 +25,7 @@ const helpmsg =
  * @param err the error message to log
  */
 async function onError(channel, err) {
+
     log(err);
     await channel.send("Sorry, I'm catnapping now. Please ask me later.");
 }
@@ -88,7 +89,7 @@ async function getCatPic(channel) {
     }
 
     let response = await request(options);
-    await sendImage(channel, response.href)
+    await sendImage(channel, response.href);
     await stats.incrementStat("catpics");
 
     log("catpic command completed");
@@ -141,7 +142,7 @@ bot.on('message', async (message) => {
             args = args.splice(1);
 
             switch (cmd) {
-                
+
                 // handle commands
                 case 'help':
                     await message.channel.send(helpmsg);

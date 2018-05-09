@@ -36,8 +36,9 @@ async function onError(channel, err) {
  * @param url the url of the image
  */
 function sendImage(channel, url) {
-    
+
     return channel.send({
+
         embed: {
             color: 4954687, //RGB value cast from hex to int. This is green!
             image: { url }
@@ -53,6 +54,7 @@ function sendImage(channel, url) {
 async function getCatFact(channel) {
 
     var options = {
+        
         method: 'GET',
         uri: 'https://polite-catfacts.herokuapp.com/catfact',
         json: true

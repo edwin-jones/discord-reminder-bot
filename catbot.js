@@ -40,6 +40,7 @@ function sendImage(channel, url) {
     return channel.send({
 
         embed: {
+
             color: 4954687, //RGB value cast from hex to int. This is green!
             image: { url }
         }
@@ -54,7 +55,7 @@ function sendImage(channel, url) {
 async function getCatFact(channel) {
 
     var options = {
-        
+
         method: 'GET',
         uri: 'https://polite-catfacts.herokuapp.com/catfact',
         json: true
@@ -75,10 +76,12 @@ async function getCatFact(channel) {
 async function getCatPic(channel) {
 
     var include_href = function (body, response, resolveWithFullResponse) {
+
         return { 'href': response.request.href };
     };
 
     var options = {
+
         method: 'GET',
         uri: 'http://thecatapi.com/api/images/get?format=src',
         transform: include_href,
@@ -126,9 +129,11 @@ bot.on('disconnect', (erMsg, code) => {
 bot.on('message', async (message) => {
 
     try {
+
         // catbot needs to know if it will execute a command
         // It will listen for messages that will start with `!`
         if (message.content.substring(0, 1) == '!') {
+
             log('recieved a command!')
 
             let args = message.content.substring(1).split(' ');
@@ -136,6 +141,7 @@ bot.on('message', async (message) => {
             args = args.splice(1);
 
             switch (cmd) {
+                
                 // handle commands
                 case 'help':
                     await message.channel.send(helpmsg);

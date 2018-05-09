@@ -163,6 +163,7 @@ bot.on('message', async (message) => {
         }
     }
     catch (err) {
+        
         onError(message.channel, err);
     }
 });

@@ -11,9 +11,10 @@ const moment = require('moment');
 const auth = require('./auth.json'); //you need to make this file yourself!
 
 const helpmsg =
-    "I am a work in progress and may not perform as you expect." +
-    "You can see this message again by typing **!help**." +
-    "You can set a reminder for yourself with the command **!remindme [about a thing] [at a time in the future]**.";
+    "I am a work in progress and may not perform as you expect.\n" +
+    "You can see this message again by typing **!help**.\n" +
+    "You can set a reminder for yourself with the command **!remindme [about a thing] [at a time in the future]**.\n"+
+    "You can remove all your reminders with **!forgetme**.";
 
 
 /**
@@ -40,16 +41,34 @@ async function setReminder(channel, message) {
 
     if(parsedDate == undefined)
     {
-        await channel.send("No date provided for reminder");
+        await channel.send("You didn't give me a date for the reminder");
         return;
     }
 
     var reminder = message.replace(parsedDate.text, "").trim();
+
+    if(!reminder)
+    {
+        await channel.send("You didn't give me a message for the reminder");
+        return;
+    }
+
     var reminderTime = moment(parsedDate.start.date());
+
+    if(reminderTime <= new Date())
+    {
+        await channel.send("I cannot set reminders for dates that are in the past");
+        return;
+    }
 
     await channel.send(`On **${reminderTime.format('LLL')}** I will remind you to **${reminder}**`)
 
     log("remindme command completed");
+}
+
+async function clearReminders(channel, userId)
+{
+    await channel.send(`I have removed all your reminders **<@${userId}>**`)
 }
 
 // Initialize Discord Bot
@@ -96,6 +115,10 @@ bot.on('message', async (message) => {
                 case 'remindme':
                     await setReminder(message.channel, parameters)
                     break;
+                
+                case 'forgetme':
+                    await clearReminders(message.channel, message.author.id)
+                break;
             }
         }
     }

@@ -1,2 +1,2 @@
-# discord-catbot
-A simple bot for discord that will tell you random cat facts
+# discord-reminder-bot
+A simple bot for discord that sets reminders for you. A WIP.

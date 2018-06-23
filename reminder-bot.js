@@ -35,7 +35,7 @@ async function onError(channel, err) {
  * @param channel the channel to send the reminder to
  * @param message the message from the user containing the reminder text and time
  */
-async function setReminder(channel, message) {
+async function setReminder(channel, message, userId) {
 
     var parsedDate = chrono.parse(message, new Date(), {forwardDate: true})[0];
 
@@ -61,14 +61,29 @@ async function setReminder(channel, message) {
         return;
     }
 
-    await channel.send(`On **${reminderTime.format('LLL')}** I will remind you to **${reminder}**`)
+    await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you to **${reminder}**`);
 
     log("remindme command completed");
 }
 
+async function sendReminder(bot, userId, channelId, message)
+{
+    let channel = bot.channels.get(channelId);
+
+    if(channel == undefined)
+    {
+        log("channel not found: " + channelId)
+        return;
+    }
+
+    await channel.send(`Hey **<@${userId}>**, remember to: **${message}**`);
+
+    log("reminder sent");
+}
+
 async function clearReminders(channel, userId)
 {
-    await channel.send(`I have removed all your reminders **<@${userId}>**`)
+    await channel.send(`I have removed all your reminders **<@${userId}>**`);
 }
 
 // Initialize Discord Bot
@@ -113,12 +128,12 @@ bot.on('message', async (message) => {
                     break;
 
                 case 'remindme':
-                    await setReminder(message.channel, parameters)
+                    await setReminder(message.channel, parameters);
                     break;
                 
                 case 'forgetme':
-                    await clearReminders(message.channel, message.author.id)
-                break;
+                    await clearReminders(message.channel, message.author.id);
+                    break;
             }
         }
     }

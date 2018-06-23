@@ -54,7 +54,7 @@ bot.on('message', async (message) => {
 
     try {
 
-        // catbot needs to know if it will execute a command
+        // the bot needs to know if it will execute a command
         // It will listen for messages that will start with `!`
         if (message.content.substring(0, 1) == '!') {
 

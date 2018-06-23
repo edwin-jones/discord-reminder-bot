@@ -62,9 +62,9 @@ async function setReminder(userId, channel, message) {
         return;
     }
 
-    agenda.schedule(reminderTime.toDate(), 'send reminder', { userId: userId, channelId: channel.id, reminder: message });
+    agenda.schedule(reminderTime.toDate(), 'send reminder', { userId: userId, channelId: channel.id, reminder: reminder });
 
-    await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you to **${reminder}**`);
+    await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you **${reminder}**`);
 
     log("remindme command completed");
 }
@@ -79,7 +79,7 @@ async function sendReminder(userId, channelId, message)
         return;
     }
 
-    await channel.send(`Hey **<@${userId}>**, remember to: **${message}**`);
+    await channel.send(`Hey **<@${userId}>**, remember **${message}**`);
 
     log("reminder sent");
 }

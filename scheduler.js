@@ -83,6 +83,8 @@ module.exports = function Scheduler(bot) {
     //it will ping the DB every minute but jobs are held in memory as well, so reminders will run on time.
     this.agenda = new Agenda({ db: { address: auth.mongourl, collection: 'agenda' } }).processEvery('one minute');
 
+    let module = this;
+
     //make sure we only try to use agenda when it's ready
     this.agenda.on('ready', async function () {
 
@@ -90,7 +92,7 @@ module.exports = function Scheduler(bot) {
         this.define('send reminder', async (job, done) => {
 
             let data = job.attrs.data;
-            await this.sendReminder(data.userId, data.channelId, data.reminder); //FIX THIS???
+            await module.sendReminder(data.userId, data.channelId, data.reminder); //FIX THIS???
 
             //remove job from DB to stop old jobs filling it up
             job.remove();

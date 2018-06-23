@@ -7,6 +7,7 @@ const discord = require('discord.js');
 const log = require('debug')('reminder-bot');
 const chrono  = require('chrono-node');
 const moment = require('moment');
+const Agenda = require('agenda');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
 
@@ -35,7 +36,7 @@ async function onError(channel, err) {
  * @param channel the channel to send the reminder to
  * @param message the message from the user containing the reminder text and time
  */
-async function setReminder(channel, message, userId) {
+async function setReminder(userId, channelId, message) {
 
     var parsedDate = chrono.parse(message, new Date(), {forwardDate: true})[0];
 
@@ -61,12 +62,14 @@ async function setReminder(channel, message, userId) {
         return;
     }
 
+    agenda.schedule(reminderTime, 'send reminder', { userId: userId, channelId: channelId, reminder: message });
+
     await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you to **${reminder}**`);
 
     log("remindme command completed");
 }
 
-async function sendReminder(bot, userId, channelId, message)
+async function sendReminder(userId, channelId, message)
 {
     let channel = bot.channels.get(channelId);
 
@@ -81,7 +84,7 @@ async function sendReminder(bot, userId, channelId, message)
     log("reminder sent");
 }
 
-async function clearReminders(channel, userId)
+async function clearReminders(userId, channel)
 {
     await channel.send(`I have removed all your reminders **<@${userId}>**`);
 }
@@ -128,11 +131,11 @@ bot.on('message', async (message) => {
                     break;
 
                 case 'remindme':
-                    await setReminder(message.channel, parameters);
+                    await setReminder(message.author.id, message.channel.id, parameters);
                     break;
                 
                 case 'forgetme':
-                    await clearReminders(message.channel, message.author.id);
+                    await clearReminders(message.author.id, message.channel);
                     break;
             }
         }
@@ -144,3 +147,15 @@ bot.on('message', async (message) => {
 });
 
 bot.login(auth.token);
+
+const agenda = new Agenda({db: {address: auth.mongourl, collection: 'agenda'}}).processEvery('one minute');
+
+agenda.on('ready', async function() {
+
+    agenda.define('send reminder', async (job, done) => {
+        await sendReminder(job.attrs.data.userId, job.attrs.data.channelId, job.attrs.data.message);
+        done();
+      });
+
+    await agenda.start();
+});

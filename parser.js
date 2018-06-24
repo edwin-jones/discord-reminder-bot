@@ -4,6 +4,7 @@
 
 const log = require('debug')('parser');
 const chrono  = require('chrono-node');
+const moment = require('moment');
 
 /**
  * Use this function to check to see if a reminder string is valid
@@ -22,14 +23,14 @@ module.exports.validateReminderString = (reminderString) => {
 
     var reminderMessage = reminderString.replace(parsedDate.text, "").trim();
 
-    if(!reminderMessage)
+    if(!reminderMessage || reminderMessage.length < 1)
     {
         return false;
     }
 
-    var reminderTime = parsedDate.start.date();
+    var reminderTime = moment(parsedDate.start.date());
 
-    if(reminderTime <= new Date())
+    if(!reminderTime.isValid() || reminderTime <= new Date())
     {
         return false;
     }

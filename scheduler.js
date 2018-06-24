@@ -26,7 +26,7 @@ function Scheduler(bot) {
 
         if (!parser.validateReminderString(message)) {
 
-            await channel.send("You didn't give me a future date or valid message for the reminder");
+            await channel.send("You didn't give me an acceptable future date or valid message for the reminder");
             return;
         }
 

@@ -21,9 +21,13 @@ module.exports.validateReminderString = (reminderString) => {
         return false;
     }
 
+    //remove whitespace from message
     var reminderMessage = reminderString.replace(parsedDate.text, "").trim();
 
-    if(!reminderMessage || reminderMessage.length < 1)
+    //remove all unprintable chars from message (ASCII 32-127 ONLY)
+    reminderMessage = reminderMessage.replace(/[^\x20-\x7F]/g, "");
+
+    if(!reminderMessage)
     {
         return false;
     }

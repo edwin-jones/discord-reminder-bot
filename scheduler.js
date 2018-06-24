@@ -42,7 +42,7 @@ class Scheduler {
 
             var reminderTime = moment(reminder.date);
 
-            this.agenda.schedule(reminder.date, 'send reminder', { userId: userId, channelId: channel.id, reminder: reminder.message });
+            agenda.schedule(reminder.date, 'send reminder', { userId: userId, channelId: channel.id, reminder: reminder.message });
 
             await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you **${reminder.message}**`);
 
@@ -57,7 +57,7 @@ class Scheduler {
         */
         this.clearReminders = async function (userId, channel) {
 
-            this.agenda.cancel({ 'data.userId': userId }, async (err, numRemoved) => {
+            agenda.cancel({ 'data.userId': userId }, async (err, numRemoved) => {
 
                 let message = `Whups, something very bad happened. Please try again later.`;
 
@@ -97,13 +97,13 @@ class Scheduler {
 
         //create agenda instance.
         //it will ping the DB every minute but jobs are held in memory as well, so reminders will run on time.
-        this.agenda = new Agenda({ db: { address: auth.mongourl, collection: 'agenda' } }).processEvery('one minute');
+        const agenda = new Agenda({ db: { address: auth.mongourl, collection: 'agenda' } }).processEvery('one minute');
 
         //make sure we only try to use agenda when it's ready
-        this.agenda.on('ready', async function () {
+        agenda.on('ready', async function () {
 
             //define our only job, the 'send reminder' job.
-            this.define('send reminder', async (job, done) => {
+            agenda.define('send reminder', async (job, done) => {
 
                 const data = job.attrs.data;
                 await sendReminder(data.userId, data.channelId, data.reminder);
@@ -111,11 +111,11 @@ class Scheduler {
                 //remove job from DB to stop old jobs filling it up
                 job.remove(error => {
 
-                        if (error) {
+                    if (error) {
 
-                            log(`failed to remove job ${job.attrs._id} from DB because of error: ${error}`);
-                        }
-                    });
+                        log(`failed to remove job ${job.attrs._id} from DB because of error: ${error}`);
+                    }
+                });
 
                 //this is an async func, call done to mark it as complete.
                 done();

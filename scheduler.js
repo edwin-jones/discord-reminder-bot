@@ -27,9 +27,10 @@ class Scheduler {
         * Use this function to set a reminder for a user
         *
         * @param userId the id of the user asking for the reminder to be set
+        * @param channel the discord channel this request is coming from
         * @param {String} message the message from the user containing the reminder text and time
         */
-        this.setReminder = async function (userId, message) {
+        this.setReminder = async function (userId, channel, message) {
 
             if (!parser.validateReminderString(message)) {
 
@@ -52,7 +53,7 @@ class Scheduler {
         * Use this function to clear all reminders for a user
         *
         * @param userId the id of the user asking for the reminder to be set
-        * @param channel the channel to send the reminder to
+        * @param channel the discord channel this request is coming from
         */
         this.clearReminders = async function (userId, channel) {
 

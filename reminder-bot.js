@@ -10,7 +10,7 @@ const Scheduler = require('./scheduler');
 const auth = require('./auth.json'); //you need to make this file yourself!
 
 const helpmsg =
-    "I am a work in progress and may not perform as you expect.\n" +
+    "Hi there, I'm reminder bot!\n" +
     "You can see this message again by typing **!help**.\n" +
     "You can set a reminder for yourself with the command **!remindme [about a thing] [at a time in the future]**.\n"+
     "You can remove all your reminders with **!forgetme**.";

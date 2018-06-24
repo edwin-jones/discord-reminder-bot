@@ -46,7 +46,7 @@ class Scheduler {
 
             await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you **${reminder.message}**`);
 
-            log("remindme command completed");
+            log("reminder set");
         }
 
         /**
@@ -69,8 +69,9 @@ class Scheduler {
                 }
 
                 await channel.send(message);
-
             });
+
+            log("reminders deleted for user " + userId);
         }
 
         /**
@@ -82,7 +83,15 @@ class Scheduler {
          */
         const sendReminder = async function (userId, channelId, message) {
 
-            const channel = bot.channels.get(channelId);
+            const user = await bot.fetchUser(userId);
+
+            if (user == undefined) {
+
+                log("user not found: " + userId)
+                return;
+            }
+
+            const channel = await user.createDM();
 
             if (channel == undefined) {
 
@@ -92,7 +101,7 @@ class Scheduler {
 
             await channel.send(`Hey **<@${userId}>**, remember **${message}**`);
 
-            log("reminder sent");
+            log("reminder sent to user " + userId);
         }
 
         //create agenda instance.

@@ -81,7 +81,7 @@ class Scheduler {
          * @param channel the channel to send the reminder to
          * @param {String} message the message from the user containing the reminder text and time
          */
-        const sendReminder = async function (userId, channelId, message) {
+        const sendReminder = async function (userId, message) {
 
             const user = await bot.fetchUser(userId);
 
@@ -95,7 +95,7 @@ class Scheduler {
 
             if (channel == undefined) {
 
-                log("channel not found: " + channelId)
+                log("dm channel not found for user " + userId)
                 return;
             }
 
@@ -115,7 +115,7 @@ class Scheduler {
             agenda.define('send reminder', async (job, done) => {
 
                 const data = job.attrs.data;
-                await sendReminder(data.userId, data.channelId, data.reminder);
+                await sendReminder(data.userId, data.reminder);
 
                 //remove job from DB to stop old jobs filling it up
                 job.remove(error => {

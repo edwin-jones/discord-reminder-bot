@@ -26,11 +26,10 @@ class Scheduler {
         /**
         * Use this function to set a reminder for a user
         *
-        * @param {String} userId the id of the user asking for the reminder to be set
-        * @param {Object} channel the channel to send the reminder to
+        * @param userId the id of the user asking for the reminder to be set
         * @param {String} message the message from the user containing the reminder text and time
         */
-        this.setReminder = async function (userId, channel, message) {
+        this.setReminder = async function (userId, message) {
 
             if (!parser.validateReminderString(message)) {
 
@@ -42,7 +41,7 @@ class Scheduler {
 
             var reminderTime = moment(reminder.date);
 
-            agenda.schedule(reminder.date, 'send reminder', { userId: userId, channelId: channel.id, reminder: reminder.message });
+            agenda.schedule(reminder.date, 'send reminder', { userId: userId, reminder: reminder.message });
 
             await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you **${reminder.message}**`);
 
@@ -78,7 +77,6 @@ class Scheduler {
          * Use this function to send a reminder to a user
          *
          * @param userId the id of the user asking for the reminder to be set
-         * @param channel the channel to send the reminder to
          * @param {String} message the message from the user containing the reminder text and time
          */
         const sendReminder = async function (userId, message) {

@@ -9,7 +9,6 @@
 
 const log = require('debug')('scheduler');
 const Agenda = require('agenda');
-const moment = require('moment');
 const parser = require('./parser');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
@@ -40,11 +39,9 @@ class Scheduler {
 
             var reminder = parser.getMessageAndDateFromReminderString(message);
 
-            var reminderTime = moment(reminder.date);
+            agenda.schedule(reminder.date.toDate(), 'send reminder', { userId: userId, reminder: reminder.message });
 
-            agenda.schedule(reminder.date, 'send reminder', { userId: userId, reminder: reminder.message });
-
-            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('LLL')}** I will remind you **${reminder.message}**`);
+            await channel.send(`OK **<@${userId}>**, on **${reminder.date.format('LLL')}** I will remind you **${reminder.message}**`);
 
             log("reminder set");
         }

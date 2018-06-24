@@ -4,6 +4,7 @@
 
 const log = require('debug')('parser');
 const chrono  = require('chrono-node');
+const moment = require('moment');
 
 /**
  * Use this function to check to see if a reminder string is valid
@@ -41,7 +42,7 @@ module.exports.validateReminderString = (reminderString) => {
  * Use this function to get the reminder message from a valid reminder string
  *
  * @param {String} reminderString the string to validate. Must contain a message and time.
- * @returns {{message: String, date: Date}}  the message and date that should be used for the reminder.
+ * @returns {{message: String, date}}  the message and date that should be used for the reminder. Date is a moment object.
  */
 module.exports.getMessageAndDateFromReminderString = (reminderString) => {
 
@@ -54,7 +55,7 @@ module.exports.getMessageAndDateFromReminderString = (reminderString) => {
 
     var message = reminderString.replace(parsedDate.text, "").trim();
 
-    var date = parsedDate.start.date();
+    var date = moment(parsedDate.start.date());
 
     return { message: message, date: date };
 }

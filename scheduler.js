@@ -113,7 +113,7 @@ function Scheduler(bot) {
 
                 if (error) {
 
-                    log(`failed to remove job ${job.attrs._id} from DB because of error: ${error}`);
+                    log(`failed to remove job ${job.attrs._id} from DB because of error: ${error.toString()}`);
                 }
             });
 

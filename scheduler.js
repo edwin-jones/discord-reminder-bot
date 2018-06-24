@@ -44,7 +44,7 @@ class Scheduler {
 
             agenda.schedule(reminder.date, 'send reminder', { userId: userId, reminder: reminder.message });
 
-            await channel.send(`Ok **<@${userId}>**, On **${reminderTime.format('LLL')}** I will remind you **${reminder.message}**`);
+            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('LLL')}** I will remind you **${reminder.message}**`);
 
             log("reminder set");
         }

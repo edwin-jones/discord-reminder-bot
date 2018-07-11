@@ -108,15 +108,6 @@ function Scheduler(bot) {
             const data = job.attrs.data;
             await sendReminder(data.userId, data.reminder);
 
-            //remove job from DB to stop old jobs filling it up
-            job.remove(error => {
-
-                if (error) {
-
-                    log(`failed to remove job ${job.attrs._id} from DB because of error: ${error.toString()}`);
-                }
-            });
-
             //this is an async func, call done to mark it as complete.
             done();
         });

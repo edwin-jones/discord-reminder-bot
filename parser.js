@@ -3,8 +3,14 @@
 'use strict';
 
 const log = require('debug')('parser');
-const chrono  = require('chrono-node');
+const chrono = require('chrono-node');
 const moment = require('moment');
+
+//set up the humanInterval module. Make sure to replace any words we want to ignore with '1'
+//in the language map as this will stop the parser mistaking them for numbers and miscalculating
+//the snooze
+const humanInterval = require('human-interval');
+humanInterval.languageMap['for'] = 1
 
 /**
  * Use this function to check to see if a reminder string is valid
@@ -14,10 +20,9 @@ const moment = require('moment');
  */
 module.exports.validateReminderString = (reminderString) => {
 
-    var parsedDate = chrono.parse(reminderString, new Date(), {forwardDate: true})[0];
+    var parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
-    if(parsedDate == undefined)
-    {
+    if (parsedDate == undefined) {
         return false;
     }
 
@@ -27,15 +32,13 @@ module.exports.validateReminderString = (reminderString) => {
     //remove all unprintable chars from message (ASCII 32-127 ONLY)
     reminderMessage = reminderMessage.replace(/[^\x20-\x7F]/g, "");
 
-    if(!reminderMessage)
-    {
+    if (!reminderMessage) {
         return false;
     }
 
     var reminderTime = moment(parsedDate.start.date());
 
-    if(!reminderTime.isValid() || reminderTime <= new Date())
-    {
+    if (!reminderTime.isValid() || reminderTime <= new Date()) {
         return false;
     }
 
@@ -50,16 +53,35 @@ module.exports.validateReminderString = (reminderString) => {
  */
 module.exports.getMessageAndDateFromReminderString = (reminderString) => {
 
-    if(!this.validateReminderString(reminderString))
-    {
+    if (!this.validateReminderString(reminderString)) {
         throw new Error("Invalid reminder string!");
     }
 
-    var parsedDate = chrono.parse(reminderString, new Date(), {forwardDate: true})[0];
+    var parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
     var message = reminderString.replace(parsedDate.text, "").trim();
 
     var date = parsedDate.start.date();
 
     return { message: message, date: date };
+}
+
+module.exports.validSnoozeString = (snoozeString) => {
+
+    let result = humanInterval(snoozeString);
+
+    if (isNaN(result)) {
+        return false;
+    }
+
+    return true;
+}
+
+module.exports.getMillisecondsFromSnoozeString = (snoozeString) => {
+
+    if (!this.validSnoozeString(snoozeString)) {
+        throw new Error("Invalid snooze string!");
+    }
+
+    return humanInterval(snoozeString);
 }

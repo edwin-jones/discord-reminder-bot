@@ -33,7 +33,7 @@ async function onError(channel, err) {
 let bot = new discord.Client();
 
 //Initialize scheduler
-//let scheduler = new Scheduler(bot); 
+let scheduler = new Scheduler(bot); 
 
 //log when the bot is ready
 bot.on('ready', (evt) => {
@@ -42,13 +42,6 @@ bot.on('ready', (evt) => {
     log('logged in as: ');
     log(`${bot.user.username} - (${bot.user.id})`);
 });
-
-//handle disconnects by auto reconnecting
-//bot.on('disconnect', (erMsg, code) => {
-
-//log(`----- bot disconnected from Discord with code ${code} for reason: ${erMsg} -----`);
-//bot.connect();
-//})
 
 // Decide what to do when the bot get a message. NOTE: discord supports markdown syntax.
 bot.on('message', async (message) => {
@@ -74,26 +67,15 @@ bot.on('message', async (message) => {
                     break;
 
                 case 'remindme':
-                    // await scheduler.setReminder(message.author.id, message.channel, parameters);
+                    await scheduler.setReminder(message.author.id, message.channel, parameters);
                     break;
 
                 case 'forgetme':
-                    // await scheduler.clearReminders(message.author.id, message.channel);
+                    await scheduler.clearReminders(message.author.id, message.channel);
                     break;
 
                 case 'snooze':
-
-                    let valid = parser.validSnoozeString(parameters);
-
-                    if (valid) {
-                        let date = parser.getDateFromSnoozeString(parameters);
-                        await message.channel.send(`OK **<@${message.author.id}>**, I will snooze reminder until ${date}`);
-                    }
-                    else {
-                        await message.channel.send("You didn't give me a correct amount of time to snooze your latest reminder for");
-                    }
-
-                    log("snooze command executed");
+                    await scheduler.snoozeReminder(message.author.id, message.channel, parameters);
                     break;
             }
         }

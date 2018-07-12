@@ -9,6 +9,8 @@ const parser = require('./parser');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
 
+const genericErrorMessage = "Sorry, I didn't understand that."
+
 /**
  * Creates a scheduler
  * @param {Object} bot the discord bot instance we are using to communicate with discord
@@ -26,7 +28,7 @@ function Scheduler(bot) {
 
         if (!parser.validateReminderString(message)) {
 
-            await channel.send("You didn't give me an acceptable future date or valid message for the reminder");
+            await channel.send(genericErrorMessage);
             return;
         }
 
@@ -39,6 +41,47 @@ function Scheduler(bot) {
         await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${reminder.message}**`);
 
         log("reminder set");
+    }
+
+    /**
+    * Use this function to set a reminder for a user
+    *
+    * @param userId the id of the user asking for the reminder to be set
+    * @param channel the discord channel this request is coming from
+    * @param {String} message the message from the user containing the reminder text and time
+    */
+    this.snoozeReminder = async function (userId, channel, message) {
+
+        if (!parser.validSnoozeString(message)) {
+
+            await channel.send(genericErrorMessage);
+            return;
+        }
+
+        let reminderDate = parser.getDateFromSnoozeString(message);
+
+        let reminderTime = moment(reminderDate);
+
+        let job = null;
+
+        agenda.jobs({ $query: { name: 'send reminder', 'data.userId': userId }, $orderby: { 'data.lastRunAt': -1 } }, async (err, jobs) => {
+            if (err) {
+                return;
+            }
+
+            if (jobs.length == 0) {
+                await channel.send(`You have no reminders to snooze **<@${userId}>**`);
+            }
+
+            job = jobs[0];
+
+            job.schedule(reminderDate);
+            job.save();
+
+            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${job.attrs.data.reminder}**`);
+
+            log("reminder snoozed");
+        });
     }
 
     /**

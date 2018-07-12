@@ -78,7 +78,7 @@ function Scheduler(bot) {
               });
 
             //get last job, will be the most recent one.
-            let job = jobs[0] ;
+            let job = jobs[0];
 
             job.schedule(reminderDate);
             job.save();

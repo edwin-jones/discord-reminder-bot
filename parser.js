@@ -12,6 +12,9 @@ const moment = require('moment');
 const humanInterval = require('human-interval');
 humanInterval.languageMap['for'] = 1
 
+const untilRegex = new RegExp("\\b"+"until"+"\\b");
+const forRegex = new RegExp("\\b"+"for"+"\\b");
+
 /**
  * Use this function to check to see if a reminder string is valid
  *
@@ -20,14 +23,14 @@ humanInterval.languageMap['for'] = 1
  */
 module.exports.validateReminderString = (reminderString) => {
 
-    var parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
+    let parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
     if (parsedDate == undefined) {
         return false;
     }
 
     //remove whitespace from message
-    var reminderMessage = reminderString.replace(parsedDate.text, "").trim();
+    let reminderMessage = reminderString.replace(parsedDate.text, "").trim();
 
     //remove all unprintable chars from message (ASCII 32-127 ONLY)
     reminderMessage = reminderMessage.replace(/[^\x20-\x7F]/g, "");
@@ -36,7 +39,7 @@ module.exports.validateReminderString = (reminderString) => {
         return false;
     }
 
-    var reminderTime = moment(parsedDate.start.date());
+    let reminderTime = moment(parsedDate.start.date());
 
     if (!reminderTime.isValid() || reminderTime <= new Date()) {
         return false;
@@ -57,31 +60,51 @@ module.exports.getMessageAndDateFromReminderString = (reminderString) => {
         throw new Error("Invalid reminder string!");
     }
 
-    var parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
+    let parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
-    var message = reminderString.replace(parsedDate.text, "").trim();
+    let message = reminderString.replace(parsedDate.text, "").trim();
 
-    var date = parsedDate.start.date();
+    let date = parsedDate.start.date();
 
     return { message: message, date: date };
 }
 
+const cleanSnoozeString = (snoozeString) =>
+{
+    snoozeString = snoozeString.replace(untilRegex, "at");
+    snoozeString = snoozeString.replace(forRegex, "in");
+
+    return snoozeString;
+}
+
 module.exports.validSnoozeString = (snoozeString) => {
 
-    let result = humanInterval(snoozeString);
+    snoozeString = cleanSnoozeString(snoozeString);
 
-    if (isNaN(result)) {
+    let parsedDate = chrono.parse(snoozeString, new Date(), { forwardDate: true })[0];
+
+    if (parsedDate == undefined) {
+        return false;
+    }
+
+    let snoozeUntilTime = moment(parsedDate.start.date());
+
+    if (!snoozeUntilTime.isValid() || snoozeUntilTime <= new Date()) {
         return false;
     }
 
     return true;
 }
 
-module.exports.getMillisecondsFromSnoozeString = (snoozeString) => {
+module.exports.getDateFromSnoozeString = (snoozeString) => {
 
     if (!this.validSnoozeString(snoozeString)) {
         throw new Error("Invalid snooze string!");
     }
 
-    return humanInterval(snoozeString);
+    const parsedDate = chrono.parse(cleanSnoozeString(snoozeString), new Date(), { forwardDate: true })[0];
+
+    const date = parsedDate.start.date();
+
+    return date;
 }

@@ -86,8 +86,8 @@ bot.on('message', async (message) => {
                     let valid = parser.validSnoozeString(parameters);
 
                     if (valid) {
-                        let result = parser.getMillisecondsFromSnoozeString(parameters);
-                        await message.channel.send(`OK **<@${message.author.id}>**, I will snooze reminder PLACEHOLDER for ${result} milliseconds`);
+                        let date = parser.getDateFromSnoozeString(parameters);
+                        await message.channel.send(`OK **<@${message.author.id}>**, I will snooze reminder until ${date}`);
                     }
                     else {
                         await message.channel.send("You didn't give me a correct amount of time to snooze your latest reminder for");

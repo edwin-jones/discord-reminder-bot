@@ -15,11 +15,19 @@ humanInterval.languageMap['for'] = 1
 const untilRegex = new RegExp("\\b"+"until"+"\\b");
 const forRegex = new RegExp("\\b"+"for"+"\\b");
 
+const cleanSnoozeString = (snoozeString) =>
+{
+    snoozeString = snoozeString.replace(untilRegex, "at");
+    snoozeString = snoozeString.replace(forRegex, "in");
+
+    return snoozeString;
+}
+
 /**
  * Use this function to check to see if a reminder string is valid
  *
  * @param {string} reminderString the string to validate. Must contain a message and time.
- * @returns {boolean} a boolean value representing if the reminder is valid or not.
+ * @returns {boolean} a boolean value representing if the reminder string is valid or not.
  */
 module.exports.validReminderString = (reminderString) => {
 
@@ -69,14 +77,12 @@ module.exports.getMessageAndDateFromReminderString = (reminderString) => {
     return { message: message, date: date };
 }
 
-const cleanSnoozeString = (snoozeString) =>
-{
-    snoozeString = snoozeString.replace(untilRegex, "at");
-    snoozeString = snoozeString.replace(forRegex, "in");
-
-    return snoozeString;
-}
-
+/**
+ * Use this function to check to see if a snooze string is valid
+ *
+ * @param {string} snoozeString the string to validate. Must contain a time.
+ * @returns {boolean} a boolean value representing if the snooze string is valid or not.
+ */
 module.exports.validSnoozeString = (snoozeString) => {
 
     snoozeString = cleanSnoozeString(snoozeString);
@@ -96,6 +102,12 @@ module.exports.validSnoozeString = (snoozeString) => {
     return true;
 }
 
+/**
+ * Use this function to get the time/date to snooze until from a valid snooze string
+ *
+ * @param {String} snoozeString the string to parse. Must contain a time.
+ * @returns {Date} the date that should be used to snooze the reminder for/until.
+ */
 module.exports.getDateFromSnoozeString = (snoozeString) => {
 
     if (!this.validSnoozeString(snoozeString)) {

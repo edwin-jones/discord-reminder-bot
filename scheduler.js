@@ -26,7 +26,7 @@ function Scheduler(bot) {
     */
     this.setReminder = async function (userId, channel, message) {
 
-        if (!parser.validateReminderString(message)) {
+        if (!parser.validReminderString(message)) {
 
             await channel.send(genericErrorMessage);
             return;

@@ -21,7 +21,7 @@ const forRegex = new RegExp("\\b"+"for"+"\\b");
  * @param {string} reminderString the string to validate. Must contain a message and time.
  * @returns {boolean} a boolean value representing if the reminder is valid or not.
  */
-module.exports.validateReminderString = (reminderString) => {
+module.exports.validReminderString = (reminderString) => {
 
     let parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
@@ -56,7 +56,7 @@ module.exports.validateReminderString = (reminderString) => {
  */
 module.exports.getMessageAndDateFromReminderString = (reminderString) => {
 
-    if (!this.validateReminderString(reminderString)) {
+    if (!this.validReminderString(reminderString)) {
         throw new Error("Invalid reminder string!");
     }
 

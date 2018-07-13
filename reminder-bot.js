@@ -6,15 +6,16 @@
 const log = require('debug')('reminder-bot');
 const discord = require('discord.js');
 const Scheduler = require('./scheduler');
+const parser = require('./parser');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
 
 const helpmsg =
     "Hi there, I'm reminder bot!\n" +
-    "You can see this message again by typing **!help**.\n" +
-    "You can set a reminder for yourself with the command **!remindme [about a thing] [at a time in the future]**.\n"+
-    "You can remove all your reminders with **!forgetme**.";
-
+    "You can see this message again by typing **!help**\n" +
+    "You can set a reminder for yourself by typing **!remindme [about a thing] [at a time in the future]**\n" +
+    "You can snooze the most recent reminder you received by typing **!snooze [for a time / until a time in the future]**\n" +
+    "You can remove all your reminders by typing **!forgetme**";
 
 /**
  * Error handler
@@ -32,7 +33,7 @@ async function onError(channel, err) {
 let bot = new discord.Client();
 
 //Initialize scheduler
-let scheduler = new Scheduler(bot); 
+let scheduler = new Scheduler(bot);
 
 //log when the bot is ready
 bot.on('ready', (evt) => {
@@ -41,13 +42,6 @@ bot.on('ready', (evt) => {
     log('logged in as: ');
     log(`${bot.user.username} - (${bot.user.id})`);
 });
-
-//handle disconnects by auto reconnecting
-bot.on('disconnect', (erMsg, code) => {
-
-    log(`----- bot disconnected from Discord with code ${code} for reason: ${erMsg} -----`);
-    bot.connect();
-})
 
 // Decide what to do when the bot get a message. NOTE: discord supports markdown syntax.
 bot.on('message', async (message) => {
@@ -62,7 +56,7 @@ bot.on('message', async (message) => {
 
             let messageContent = message.content.substring(1);
             let command = messageContent.split(' ')[0];
-            let parameters =  messageContent.substring(messageContent.indexOf(' ') + 1);
+            let parameters = messageContent.substring(messageContent.indexOf(' ') + 1);
 
             switch (command) {
 
@@ -75,7 +69,11 @@ bot.on('message', async (message) => {
                 case 'remindme':
                     await scheduler.setReminder(message.author.id, message.channel, parameters);
                     break;
-                
+
+                case 'snooze':
+                    await scheduler.snoozeReminder(message.author.id, message.channel, parameters);
+                    break;
+
                 case 'forgetme':
                     await scheduler.clearReminders(message.author.id, message.channel);
                     break;

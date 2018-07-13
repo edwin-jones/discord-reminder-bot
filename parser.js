@@ -3,39 +3,50 @@
 'use strict';
 
 const log = require('debug')('parser');
-const chrono  = require('chrono-node');
+const chrono = require('chrono-node');
 const moment = require('moment');
+
+//we use these regexes to repeatedly find the words 'until' and 'for' in a string
+//only when they are NOT part of other words
+const untilRegex = new RegExp("\\b" + "until" + "\\b");
+const forRegex = new RegExp("\\b" + "for" + "\\b");
+
+//This function uses the above regexes to replace words in our snooze string
+//so it will work better with chrono-node
+const cleanSnoozeString = (snoozeString) => {
+    snoozeString = snoozeString.replace(untilRegex, "at");
+    snoozeString = snoozeString.replace(forRegex, "in");
+
+    return snoozeString;
+}
 
 /**
  * Use this function to check to see if a reminder string is valid
  *
  * @param {string} reminderString the string to validate. Must contain a message and time.
- * @returns {boolean} a boolean value representing if the reminder is valid or not.
+ * @returns {boolean} a boolean value representing if the reminder string is valid or not.
  */
-module.exports.validateReminderString = (reminderString) => {
+module.exports.validReminderString = (reminderString) => {
 
-    var parsedDate = chrono.parse(reminderString, new Date(), {forwardDate: true})[0];
+    let parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
-    if(parsedDate == undefined)
-    {
+    if (parsedDate == undefined) {
         return false;
     }
 
     //remove whitespace from message
-    var reminderMessage = reminderString.replace(parsedDate.text, "").trim();
+    let reminderMessage = reminderString.replace(parsedDate.text, "").trim();
 
     //remove all unprintable chars from message (ASCII 32-127 ONLY)
     reminderMessage = reminderMessage.replace(/[^\x20-\x7F]/g, "");
 
-    if(!reminderMessage)
-    {
+    if (!reminderMessage) {
         return false;
     }
 
-    var reminderTime = moment(parsedDate.start.date());
+    let reminderTime = moment(parsedDate.start.date());
 
-    if(!reminderTime.isValid() || reminderTime <= new Date())
-    {
+    if (!reminderTime.isValid() || reminderTime <= new Date()) {
         return false;
     }
 
@@ -50,16 +61,59 @@ module.exports.validateReminderString = (reminderString) => {
  */
 module.exports.getMessageAndDateFromReminderString = (reminderString) => {
 
-    if(!this.validateReminderString(reminderString))
-    {
+    if (!this.validReminderString(reminderString)) {
         throw new Error("Invalid reminder string!");
     }
 
-    var parsedDate = chrono.parse(reminderString, new Date(), {forwardDate: true})[0];
+    let parsedDate = chrono.parse(reminderString, new Date(), { forwardDate: true })[0];
 
-    var message = reminderString.replace(parsedDate.text, "").trim();
+    let message = reminderString.replace(parsedDate.text, "").trim();
 
-    var date = parsedDate.start.date();
+    let date = parsedDate.start.date();
 
     return { message: message, date: date };
+}
+
+/**
+ * Use this function to check to see if a snooze string is valid
+ *
+ * @param {string} snoozeString the string to validate. Must contain a time.
+ * @returns {boolean} a boolean value representing if the snooze string is valid or not.
+ */
+module.exports.validSnoozeString = (snoozeString) => {
+
+    snoozeString = cleanSnoozeString(snoozeString);
+
+    let parsedDate = chrono.parse(snoozeString, new Date(), { forwardDate: true })[0];
+
+    if (parsedDate == undefined) {
+        return false;
+    }
+
+    let snoozeUntilTime = moment(parsedDate.start.date());
+
+    if (!snoozeUntilTime.isValid() || snoozeUntilTime <= new Date()) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Use this function to get the time/date to snooze until from a valid snooze string
+ *
+ * @param {String} snoozeString the string to parse. Must contain a time.
+ * @returns {Date} the date that should be used to snooze the reminder for/until.
+ */
+module.exports.getDateFromSnoozeString = (snoozeString) => {
+
+    if (!this.validSnoozeString(snoozeString)) {
+        throw new Error("Invalid snooze string!");
+    }
+
+    let parsedDate = chrono.parse(cleanSnoozeString(snoozeString), new Date(), { forwardDate: true })[0];
+
+    let date = parsedDate.start.date();
+
+    return date;
 }

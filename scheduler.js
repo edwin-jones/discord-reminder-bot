@@ -9,9 +9,11 @@ const parser = require('./parser');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
 
+const genericErrorMessage = "Sorry, I didn't understand that."
+
 /**
  * Creates a scheduler
- * @param {Object} bot the discord bot instance we are using to communicate with discord
+ * @param {Object} bot the discord.js bot instance we are using to communicate with discord
  */
 function Scheduler(bot) {
 
@@ -24,9 +26,9 @@ function Scheduler(bot) {
     */
     this.setReminder = async function (userId, channel, message) {
 
-        if (!parser.validateReminderString(message)) {
+        if (!parser.validReminderString(message)) {
 
-            await channel.send("You didn't give me an acceptable future date or valid message for the reminder");
+            await channel.send(genericErrorMessage);
             return;
         }
 
@@ -38,7 +40,59 @@ function Scheduler(bot) {
 
         await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${reminder.message}**`);
 
-        log("reminder set");
+        log(`reminder set for user ${userId}`);
+    }
+
+    /**
+    * Use this function to set a reminder for a user
+    *
+    * @param userId the id of the user asking for a reminder to be snoozed
+    * @param channel the discord channel this request is coming from
+    * @param {String} message the message from the user containing the snooze time
+    */
+    this.snoozeReminder = async function (userId, channel, message) {
+
+        if (!parser.validSnoozeString(message)) {
+
+            await channel.send(genericErrorMessage);
+            return;
+        }
+
+        let reminderDate = parser.getDateFromSnoozeString(message);
+
+        let reminderTime = moment(reminderDate);
+
+        //find the most recently run reminder job for a user.
+        //we have to do this with a raw mongo query so we can sort and limit.
+        let rawJob = await agenda._collection
+            .find({ name: 'send reminder', 'data.userId': userId, nextRunAt: null })
+            .sort({ lastRunAt: -1 })
+            .limit(1)
+            .next();
+
+        if (rawJob == null) {
+            await channel.send(`You have no reminders to snooze **<@${userId}>**`);
+            return;
+        }
+
+        //_id always has a unique index in mongo so this search should always find one record
+        agenda.jobs({ _id: rawJob._id }, async (err, jobs) => {
+
+            if (err) {
+                log(`reminder snooze failed due to error: ${err}`);
+                return;
+            }
+
+            //there will only be one job to work with due to the _id filter.
+            let job = jobs[0];
+
+            job.schedule(reminderDate);
+            job.save();
+
+            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${job.attrs.data.reminder}**`);
+
+            log(`reminder snoozed for user ${userId}`);
+        });
     }
 
     /**
@@ -61,9 +115,9 @@ function Scheduler(bot) {
             }
 
             await channel.send(message);
-        });
 
-        log("reminders deleted for user " + userId);
+            log(`reminders delete request processed for user ${userId}`);
+        });
     }
 
     /**
@@ -108,15 +162,6 @@ function Scheduler(bot) {
             const data = job.attrs.data;
             await sendReminder(data.userId, data.reminder);
 
-            //remove job from DB to stop old jobs filling it up
-            job.remove(error => {
-
-                if (error) {
-
-                    log(`failed to remove job ${job.attrs._id} from DB because of error: ${error.toString()}`);
-                }
-            });
-
             //this is an async func, call done to mark it as complete.
             done();
         });
@@ -127,6 +172,6 @@ function Scheduler(bot) {
 }
 
 
-//always assign an already defined functions to exports or you will get a singleton!
+//always assign an already defined function to exports or you will get a singleton!
 //see https://medium.com/@iaincollins/how-not-to-create-a-singleton-in-node-js-bd7fde5361f5
 module.exports = Scheduler;

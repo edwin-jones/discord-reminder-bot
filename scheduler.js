@@ -62,6 +62,8 @@ function Scheduler(bot) {
 
         let reminderTime = moment(reminderDate);
 
+        //find the most recently run reminder job for a user.
+        //we have to do this with a raw mongo query so we can sort and limit.
         let rawJob = await agenda._collection
             .find({ name: 'send reminder', 'data.userId': userId, nextRunAt: null })
             .sort({ lastRunAt: -1 })
@@ -73,6 +75,7 @@ function Scheduler(bot) {
             return;
         }
 
+        //_id always has a unique index in mongo so this search should always find one record
         agenda.jobs({ _id: rawJob._id }, async (err, jobs) => {
 
             if (err) {

@@ -12,11 +12,10 @@ const moment = require('moment');
 const humanInterval = require('human-interval');
 humanInterval.languageMap['for'] = 1
 
-const untilRegex = new RegExp("\\b"+"until"+"\\b");
-const forRegex = new RegExp("\\b"+"for"+"\\b");
+const untilRegex = new RegExp("\\b" + "until" + "\\b");
+const forRegex = new RegExp("\\b" + "for" + "\\b");
 
-const cleanSnoozeString = (snoozeString) =>
-{
+const cleanSnoozeString = (snoozeString) => {
     snoozeString = snoozeString.replace(untilRegex, "at");
     snoozeString = snoozeString.replace(forRegex, "in");
 

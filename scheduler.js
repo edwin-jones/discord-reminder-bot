@@ -13,7 +13,7 @@ const genericErrorMessage = "Sorry, I didn't understand that."
 
 /**
  * Creates a scheduler
- * @param {Object} bot the discord bot instance we are using to communicate with discord
+ * @param {Object} bot the discord.js bot instance we are using to communicate with discord
  */
 function Scheduler(bot) {
 
@@ -40,15 +40,15 @@ function Scheduler(bot) {
 
         await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${reminder.message}**`);
 
-        log("reminder set");
+        log(`reminder set for user ${userId}`);
     }
 
     /**
     * Use this function to set a reminder for a user
     *
-    * @param userId the id of the user asking for the reminder to be set
+    * @param userId the id of the user asking for a reminder to be snoozed
     * @param channel the discord channel this request is coming from
-    * @param {String} message the message from the user containing the reminder text and time
+    * @param {String} message the message from the user containing the snooze time
     */
     this.snoozeReminder = async function (userId, channel, message) {
 
@@ -88,7 +88,7 @@ function Scheduler(bot) {
 
             await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${job.attrs.data.reminder}**`);
 
-            log("reminder snoozed");
+            log(`reminder snoozed for user ${userId}`);
         });
     }
 
@@ -112,9 +112,9 @@ function Scheduler(bot) {
             }
 
             await channel.send(message);
-        });
 
-        log("reminders deleted for user " + userId);
+            log(`reminders delete request processed for user ${userId}`);
+        });
     }
 
     /**
@@ -169,6 +169,6 @@ function Scheduler(bot) {
 }
 
 
-//always assign an already defined functions to exports or you will get a singleton!
+//always assign an already defined function to exports or you will get a singleton!
 //see https://medium.com/@iaincollins/how-not-to-create-a-singleton-in-node-js-bd7fde5361f5
 module.exports = Scheduler;

@@ -12,11 +12,10 @@ const auth = require('./auth.json'); //you need to make this file yourself!
 
 const helpmsg =
     "Hi there, I'm reminder bot!\n" +
-    "You can see this message again by typing **!help**.\n" +
-    "You can set a reminder for yourself with the command **!remindme [about a thing] [at a time in the future]**.\n" +
-    "You can snooze the most recent reminder you received with **!snooze [for a time / until a time in the future]**.\n" +
-    "You can remove all your reminders with **!forgetme**.";
-
+    "You can see this message again by typing **!help**\n" +
+    "You can set a reminder for yourself by typing **!remindme [about a thing] [at a time in the future]**\n" +
+    "You can snooze the most recent reminder you received by typing **!snooze [for a time / until a time in the future]**\n" +
+    "You can remove all your reminders by typing **!forgetme**";
 
 /**
  * Error handler

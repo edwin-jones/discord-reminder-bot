@@ -62,22 +62,25 @@ function Scheduler(bot) {
 
         let reminderTime = moment(reminderDate);
 
-        agenda.jobs({ $query: { name: 'send reminder', 'data.userId': userId, nextRunAt:null }}, async (err, jobs) => {
+        let rawJob = await agenda._collection
+            .find({ name: 'send reminder', 'data.userId': userId, nextRunAt: null })
+            .sort({ lastRunAt: -1 })
+            .limit(1)
+            .next();
+
+        if (rawJob == null) {
+            await channel.send(`You have no reminders to snooze **<@${userId}>**`);
+            return;
+        }
+
+        agenda.jobs({ _id: rawJob._id }, async (err, jobs) => {
+
             if (err) {
+                log(`reminder snooze failed due to error: ${err}`);
                 return;
             }
 
-            if (jobs.length == 0) {
-                await channel.send(`You have no reminders to snooze **<@${userId}>**`);
-                return;
-            }
-
-            //sort jobs so the one than ran most recently is at the start
-            jobs.sort(function(a,b){
-                return new Date(b.attrs.lastRunAt) - new Date(a.attrs.lastRunAt);
-              });
-
-            //get last job, will be the most recent one.
+            //there will only be one job to work with due to the _id filter.
             let job = jobs[0];
 
             job.schedule(reminderDate);

@@ -14,6 +14,7 @@ const helpmsg =
     "Hi there, I'm reminder bot!\n" +
     "You can see this message again by typing **!help**.\n" +
     "You can set a reminder for yourself with the command **!remindme [about a thing] [at a time in the future]**.\n" +
+    "You can snooze the most recent reminder you received with **!snooze [for a time / until a time in the future]**.\n" +
     "You can remove all your reminders with **!forgetme**.";
 
 
@@ -33,7 +34,7 @@ async function onError(channel, err) {
 let bot = new discord.Client();
 
 //Initialize scheduler
-let scheduler = new Scheduler(bot); 
+let scheduler = new Scheduler(bot);
 
 //log when the bot is ready
 bot.on('ready', (evt) => {
@@ -70,12 +71,12 @@ bot.on('message', async (message) => {
                     await scheduler.setReminder(message.author.id, message.channel, parameters);
                     break;
 
-                case 'forgetme':
-                    await scheduler.clearReminders(message.author.id, message.channel);
-                    break;
-
                 case 'snooze':
                     await scheduler.snoozeReminder(message.author.id, message.channel, parameters);
+                    break;
+
+                case 'forgetme':
+                    await scheduler.clearReminders(message.author.id, message.channel);
                     break;
             }
         }

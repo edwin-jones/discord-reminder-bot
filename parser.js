@@ -6,15 +6,13 @@ const log = require('debug')('parser');
 const chrono = require('chrono-node');
 const moment = require('moment');
 
-//set up the humanInterval module. Make sure to replace any words we want to ignore with '1'
-//in the language map as this will stop the parser mistaking them for numbers and miscalculating
-//the snooze
-const humanInterval = require('human-interval');
-humanInterval.languageMap['for'] = 1
-
+//we use these regexes to repeatedly find the words 'until' and 'for' in a string
+//only when they are NOT part of other words
 const untilRegex = new RegExp("\\b" + "until" + "\\b");
 const forRegex = new RegExp("\\b" + "for" + "\\b");
 
+//This function uses the above regexes to replace words in our snooze string
+//so it will work better with chrono-node
 const cleanSnoozeString = (snoozeString) => {
     snoozeString = snoozeString.replace(untilRegex, "at");
     snoozeString = snoozeString.replace(forRegex, "in");

@@ -15,6 +15,7 @@ const helpmsg =
     "You can see this message again by typing **!help**\n" +
     "You can set a reminder for yourself by typing **!remindme [about a thing] [at a time in the future]**\n" +
     "You can snooze the most recent reminder you received by typing **!snooze [for a time / until a time in the future]**\n" +
+    "You can list all your upcoming reminders by typing **!list**\n" +
     "You can remove all your reminders by typing **!forgetme**";
 
 /**
@@ -72,6 +73,10 @@ bot.on('message', async (message) => {
 
                 case 'snooze':
                     await scheduler.snoozeReminder(message.author.id, message.channel, parameters);
+                    break;
+
+                case 'list':
+                    await scheduler.listReminders(message.author.id, message.channel);
                     break;
 
                 case 'forgetme':

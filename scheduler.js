@@ -3,13 +3,18 @@
 'use strict';
 
 const log = require('debug')('scheduler');
-const Agenda = require('agenda');
 const moment = require('moment');
+const Agenda = require('agenda');
+const StringBuilder = require('string-builder');
 const parser = require('./parser');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
 
-const genericErrorMessage = "Sorry, I didn't understand that."
+const genericParserErrorMessage = "Sorry, I didn't understand that."
+const genericSchedulerErrorMessage = "Sorry, I couldn't do that at this time. Please try again later."
+
+const reminderJobName = "send reminder";
+const dateFormatString = "dddd, MMMM Do, YYYY [at] hh:mm:ss A"
 
 /**
  * Creates a scheduler
@@ -28,7 +33,7 @@ function Scheduler(bot) {
 
         if (!parser.validReminderString(message)) {
 
-            await channel.send(genericErrorMessage);
+            await channel.send(genericParserErrorMessage);
             return;
         }
 
@@ -36,9 +41,9 @@ function Scheduler(bot) {
 
         var reminderTime = moment(reminder.date);
 
-        agenda.schedule(reminder.date, 'send reminder', { userId: userId, reminder: reminder.message });
+        agenda.schedule(reminder.date, reminderJobName, { userId: userId, reminder: reminder.message });
 
-        await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${reminder.message}**`);
+        await channel.send(`OK **<@${userId}>**, on **${reminderTime.format(dateFormatString)}** I will remind you **${reminder.message}**`);
 
         log(`reminder set for user ${userId}`);
     }
@@ -54,7 +59,7 @@ function Scheduler(bot) {
 
         if (!parser.validSnoozeString(message)) {
 
-            await channel.send(genericErrorMessage);
+            await channel.send(genericParserErrorMessage);
             return;
         }
 
@@ -65,7 +70,7 @@ function Scheduler(bot) {
         //find the most recently run reminder job for a user.
         //we have to do this with a raw mongo query so we can sort and limit.
         let rawJob = await agenda._collection
-            .find({ name: 'send reminder', 'data.userId': userId, nextRunAt: null })
+            .find({ name: reminderJobName, 'data.userId': userId, nextRunAt: null })
             .sort({ lastRunAt: -1 })
             .limit(1)
             .next();
@@ -89,9 +94,56 @@ function Scheduler(bot) {
             job.schedule(reminderDate);
             job.save();
 
-            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format('dddd, MMMM Do, YYYY [at] hh:mm:ss A')}** I will remind you **${job.attrs.data.reminder}**`);
+            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format(dateFormatString)}** I will remind you **${job.attrs.data.reminder}**`);
 
             log(`reminder snoozed for user ${userId}`);
+        });
+    }
+
+    /**
+   * Use this function to list all upcoming reminders for a user
+   *
+   * @param userId the id of the user asking for the list of reminders
+   * @param channel the discord channel this request is coming from
+   */
+    this.listReminders = async function (userId, channel) {
+
+        agenda.jobs({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $ne: null } }, async (err, jobs) => {
+
+            if (err) {
+
+                await channel.send(genericSchedulerErrorMessage);
+                return;
+            }
+            else if (jobs.length === 0) {
+
+                await channel.send(`You have no reminders pending **<@${userId}>**`);
+                return;
+            }
+            else {
+
+                var sb = new StringBuilder();
+                sb.appendLine(`OK **<@${userId}>**, I have found the following upcoming reminders for you:`)
+
+
+                //sort upcoming jobs so the soonest to run is first, latest to run is last.
+                jobs.sort(function(a, b) {
+                    return a.attrs.nextRunAt - b.attrs.nextRunAt;
+                });
+
+                for (let job of jobs) {
+
+                    let id = job.attrs._id;
+                    let nextRunAt = moment(job.attrs.nextRunAt);
+                    let reminder = job.attrs.data.reminder;
+
+                    sb.appendLine(`\tID: **${id}**  Time: **${nextRunAt.format(dateFormatString)}** Message: **${reminder}**`);
+                }
+
+                await channel.send(sb.toString());
+            }
+
+            log(`list reminders request processed for user ${userId}`);
         });
     }
 
@@ -103,7 +155,7 @@ function Scheduler(bot) {
     */
     this.clearReminders = async function (userId, channel) {
 
-        agenda.cancel({ 'data.userId': userId }, async (err, numRemoved) => {
+        agenda.cancel({ name: reminderJobName, 'data.userId': userId }, async (err, numRemoved) => {
 
             let message = `Whups, something very bad happened. Please try again later.`;
 
@@ -116,7 +168,7 @@ function Scheduler(bot) {
 
             await channel.send(message);
 
-            log(`reminders delete request processed for user ${userId}`);
+            log(`delete reminders request processed for user ${userId}`);
         });
     }
 

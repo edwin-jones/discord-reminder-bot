@@ -137,7 +137,9 @@ function Scheduler(bot) {
                     let nextRunAt = moment(job.attrs.nextRunAt);
                     let reminder = job.attrs.data.reminder;
 
-                    sb.appendLine(`\tID: **${id}**\tTime: **${nextRunAt.format(dateFormatString)}**\tMessage: **${reminder}**`);
+                    sb.appendLine();
+                    sb.appendLine(`\tTime: **${nextRunAt.format(dateFormatString)}**`);
+                    sb.appendLine(`\tMessage: **${reminder}**`);
                 }
 
                 await channel.send(sb.toString());

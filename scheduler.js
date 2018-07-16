@@ -101,11 +101,11 @@ function Scheduler(bot) {
     }
 
     /**
-   * Use this function to list all upcoming reminders for a user
-   *
-   * @param userId the id of the user asking for the list of reminders
-   * @param channel the discord channel this request is coming from
-   */
+    * Use this function to list all upcoming reminders for a user
+    *
+    * @param userId the id of the user asking for a list of their reminders
+    * @param channel the discord channel this request is coming from
+    */
     this.listReminders = async function (userId, channel) {
 
         agenda.jobs({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $ne: null } }, async (err, jobs) => {
@@ -125,9 +125,8 @@ function Scheduler(bot) {
                 var sb = new StringBuilder();
                 sb.appendLine(`OK **<@${userId}>**, I have found the following upcoming reminders for you:`)
 
-
                 //sort upcoming jobs so the soonest to run is first, latest to run is last.
-                jobs.sort(function(a, b) {
+                jobs.sort(function (a, b) {
                     return a.attrs.nextRunAt - b.attrs.nextRunAt;
                 });
 
@@ -152,7 +151,7 @@ function Scheduler(bot) {
     /**
     * Use this function to clear all reminders for a user
     *
-    * @param userId the id of the user asking for the reminder to be set
+    * @param userId the id of the user asking for their reminders to deleted
     * @param channel the discord channel this request is coming from
     */
     this.clearReminders = async function (userId, channel) {
@@ -177,8 +176,8 @@ function Scheduler(bot) {
     /**
      * Use this function to send a reminder to a user
      *
-     * @param userId the id of the user asking for the reminder to be set
-     * @param {String} message the message from the user containing the reminder text and time
+     * @param userId the id of the user to send a reminder to
+     * @param {String} message the reminder message to send to a user
      */
     const sendReminder = async function (userId, message) {
 

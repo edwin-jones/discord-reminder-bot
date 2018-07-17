@@ -23,6 +23,29 @@ const dateFormatString = "dddd, MMMM Do, YYYY [at] hh:mm:ss A"
 function Scheduler(bot) {
 
     /**
+    * Use this function to get the id of the most recent job for a user
+    *
+    * @param userId the id of a user
+    * @returns The job id of the latest job for the given user, or null if none exist
+    */
+    let getLatestJobId = async function getLatestJobId(userId) {
+
+        //find the most recently run reminder job for a user.
+        //we have to do this with a raw mongo query so we can sort and limit.
+        let rawJob = await agenda._collection
+            .find({ name: reminderJobName, 'data.userId': userId, nextRunAt: null })
+            .sort({ lastRunAt: -1 })
+            .limit(1)
+            .next();
+
+        if (rawJob == null) {
+            return null;
+        }
+
+        return rawJob._id
+    }
+
+    /**
     * Use this function to set a reminder for a user
     *
     * @param userId the id of the user asking for the reminder to be set
@@ -67,21 +90,15 @@ function Scheduler(bot) {
 
         let reminderTime = moment(reminderDate);
 
-        //find the most recently run reminder job for a user.
-        //we have to do this with a raw mongo query so we can sort and limit.
-        let rawJob = await agenda._collection
-            .find({ name: reminderJobName, 'data.userId': userId, nextRunAt: null })
-            .sort({ lastRunAt: -1 })
-            .limit(1)
-            .next();
+        let jobId = await getLatestJobId(userId);
 
-        if (rawJob == null) {
+        if (jobId == null) {
             await channel.send(`You have no reminders to snooze **<@${userId}>**`);
             return;
         }
 
         //_id always has a unique index in mongo so this search should always find one record
-        agenda.jobs({ _id: rawJob._id }, async (err, jobs) => {
+        agenda.jobs({ _id: jobId }, async (err, jobs) => {
 
             if (err) {
                 log(`reminder snooze failed due to error: ${err}`);
@@ -145,6 +162,50 @@ function Scheduler(bot) {
             }
 
             log(`list reminders request processed for user ${userId}`);
+        });
+    }
+
+    /**
+    * Use this function to remove the most recent reminder for a user
+    *
+    * @param userId the id of the user asking for a reminder to be removed
+    * @param channel the discord channel this request is coming from
+    */
+    this.clearReminder = async function (userId, channel) {
+
+        let jobId = await getLatestJobId(userId);
+        if (jobId == null) {
+            await channel.send(`You have no reminders to remove **<@${userId}>**`);
+            return;
+        }
+
+        //_id always has a unique index in mongo so this search should always find one record
+        agenda.jobs({ _id: jobId }, async (err, jobs) => {
+
+            if (err) {
+
+                await channel.send(genericSchedulerErrorMessage);
+                log(`reminder removal failed due to error: ${err}`);
+                return;
+            }
+
+            //there will only be one job to work with due to the _id filter.
+            let job = jobs[0];
+
+            job.remove(async (err) => {
+
+                if (!err) {
+
+                    await channel.send(`OK **<@${userId}>**, I have removed your most recent reminder: **${job.attrs.data.reminder}**`);
+
+                    log(`reminder removed for user ${userId}`);
+                }
+                else {
+
+                    log(`reminder removal failed due to error: ${err}`);
+                    await channel.send(genericSchedulerErrorMessage);
+                }
+            });
         });
     }
 
@@ -223,7 +284,6 @@ function Scheduler(bot) {
         await this.start();
     });
 }
-
 
 //always assign an already defined function to exports or you will get a singleton!
 //see https://medium.com/@iaincollins/how-not-to-create-a-singleton-in-node-js-bd7fde5361f5

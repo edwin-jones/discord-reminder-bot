@@ -15,7 +15,7 @@ const helpmsg =
     "You can see this message again by typing **!help**\n" +
     "You can set a reminder for yourself by typing **!remindme [about a thing] [at a time in the future]**\n" +
     "You can snooze the most recent reminder you received by typing **!snooze [for a time / until a time in the future]**\n" +
-    "You can remove the most recent reminder you received by typing **!remove**";
+    "You can remove the most recent reminder you received by typing **!remove**\n"; +
     "You can list all your upcoming reminders by typing **!list**\n" + 
     "You can remove all your reminders by typing **!forgetme**";
 

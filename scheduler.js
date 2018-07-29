@@ -98,23 +98,17 @@ function Scheduler(bot) {
         }
 
         //_id always has a unique index in mongo so this search should always find one record
-        agenda.jobs({ _id: jobId }, async (err, jobs) => {
+        let jobs = await agenda.jobs({ _id: jobId });
 
-            if (err) {
-                log(`reminder snooze failed due to error: ${err}`);
-                return;
-            }
+        //there will only be one job to work with due to the _id filter.
+        let job = jobs[0];
 
-            //there will only be one job to work with due to the _id filter.
-            let job = jobs[0];
+        job.schedule(reminderDate);
+        job.save();
 
-            job.schedule(reminderDate);
-            job.save();
+        await channel.send(`OK **<@${userId}>**, on **${reminderTime.format(dateFormatString)}** I will remind you **${job.attrs.data.reminder}**`);
 
-            await channel.send(`OK **<@${userId}>**, on **${reminderTime.format(dateFormatString)}** I will remind you **${job.attrs.data.reminder}**`);
-
-            log(`reminder snoozed for user ${userId}`);
-        });
+        log(`reminder snoozed for user ${userId}`);      
     }
 
     /**
@@ -125,44 +119,37 @@ function Scheduler(bot) {
     */
     this.listReminders = async function (userId, channel) {
 
-        agenda.jobs({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $ne: null } }, async (err, jobs) => {
-
-            if (err) {
-
-                await channel.send(genericSchedulerErrorMessage);
-                return;
-            }
-            else if (jobs.length === 0) {
+        let jobs = await agenda.jobs({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $ne: null } }); 
+            
+        if (jobs.length === 0) {
 
                 await channel.send(`You have no reminders pending **<@${userId}>**`);
                 return;
             }
-            else {
 
-                var sb = new StringBuilder();
-                sb.appendLine(`OK **<@${userId}>**, I have found the following upcoming reminders for you:`)
 
-                //sort upcoming jobs so the soonest to run is first, latest to run is last.
-                jobs.sort(function (a, b) {
-                    return a.attrs.nextRunAt - b.attrs.nextRunAt;
-                });
+        var sb = new StringBuilder();
+        sb.appendLine(`OK **<@${userId}>**, I have found the following upcoming reminders for you:`)
 
-                for (let job of jobs) {
-
-                    let id = job.attrs._id;
-                    let nextRunAt = moment(job.attrs.nextRunAt);
-                    let reminder = job.attrs.data.reminder;
-
-                    sb.appendLine();
-                    sb.appendLine(`\tTime: **${nextRunAt.format(dateFormatString)}**`);
-                    sb.appendLine(`\tMessage: **${reminder}**`);
-                }
-
-                await channel.send(sb.toString());
-            }
-
-            log(`list reminders request processed for user ${userId}`);
+        //sort upcoming jobs so the soonest to run is first, latest to run is last.
+        jobs.sort(function (a, b) {
+            return a.attrs.nextRunAt - b.attrs.nextRunAt;
         });
+
+        for (let job of jobs) {
+            
+            let nextRunAt = moment(job.attrs.nextRunAt);
+            let reminder = job.attrs.data.reminder;
+
+            sb.appendLine();
+            sb.appendLine(`\tTime: **${nextRunAt.format(dateFormatString)}**`);
+            sb.appendLine(`\tMessage: **${reminder}**`);
+        }
+
+        await channel.send(sb.toString());
+    
+
+        log(`list reminders request processed for user ${userId}`);
     }
 
     /**
@@ -174,39 +161,23 @@ function Scheduler(bot) {
     this.clearReminder = async function (userId, channel) {
 
         let jobId = await getLatestJobId(userId);
+        
         if (jobId == null) {
             await channel.send(`You have no reminders to remove **<@${userId}>**`);
             return;
         }
 
         //_id always has a unique index in mongo so this search should always find one record
-        agenda.jobs({ _id: jobId }, async (err, jobs) => {
+        let jobs = await agenda.jobsagenda.jobs({ _id: jobId });
 
-            if (err) {
+        //there will only be one job to work with due to the _id filter.
+        let job = jobs[0];
 
-                await channel.send(genericSchedulerErrorMessage);
-                log(`reminder removal failed due to error: ${err}`);
-                return;
-            }
+        await job.remove();
 
-            //there will only be one job to work with due to the _id filter.
-            let job = jobs[0];
+        await channel.send(`OK **<@${userId}>**, I have removed your most recent reminder: **${job.attrs.data.reminder}**`);
 
-            job.remove(async (err) => {
-
-                if (!err) {
-
-                    await channel.send(`OK **<@${userId}>**, I have removed your most recent reminder: **${job.attrs.data.reminder}**`);
-
-                    log(`reminder removed for user ${userId}`);
-                }
-                else {
-
-                    log(`reminder removal failed due to error: ${err}`);
-                    await channel.send(genericSchedulerErrorMessage);
-                }
-            });
-        });
+        log(`reminder removed for user ${userId}`);
     }
 
     /**
@@ -217,21 +188,11 @@ function Scheduler(bot) {
     */
     this.clearReminders = async function (userId, channel) {
 
-        agenda.cancel({ name: reminderJobName, 'data.userId': userId }, async (err, numRemoved) => {
+        let numRemoved = await agenda.cancel({ name: reminderJobName, 'data.userId': userId });
 
-            let message = `Whups, something very bad happened. Please try again later.`;
+        await channel.send(`I have removed all ${numRemoved} of your reminders **<@${userId}>**`);
 
-            if (err) {
-                message = `I couldn't remove your reminders **<@${userId}>**, please try again later.`
-            }
-            else {
-                message = `I have removed all ${numRemoved} of your reminders **<@${userId}>**`
-            }
-
-            await channel.send(message);
-
-            log(`delete reminders request processed for user ${userId}`);
-        });
+        log(`delete reminders request processed for user ${userId}`);
     }
 
     /**

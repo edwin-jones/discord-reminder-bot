@@ -127,7 +127,6 @@ function Scheduler(bot) {
                 return;
             }
 
-
         var sb = new StringBuilder();
         sb.appendLine(`OK **<@${userId}>**, I have found the following upcoming reminders for you:`)
 
@@ -161,7 +160,7 @@ function Scheduler(bot) {
     this.clearReminder = async function (userId, channel) {
 
         let jobId = await getLatestJobId(userId);
-        
+
         if (jobId == null) {
             await channel.send(`You have no reminders to remove **<@${userId}>**`);
             return;
@@ -226,7 +225,7 @@ function Scheduler(bot) {
 
     //create agenda instance.
     //it will ping the DB every minute but jobs are held in memory as well, so reminders will run on time.
-    const agenda = new Agenda({ db: { address: auth.mongourl, collection: 'agenda' } }).processEvery('one minute');
+    const agenda = new Agenda({ db: { address: auth.mongourl, collection: 'agenda', options: { useNewUrlParser: true } } }).processEvery('one minute');
 
     //make sure we only try to use agenda when it's ready
     agenda.on('ready', async function () {

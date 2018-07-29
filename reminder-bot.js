@@ -96,5 +96,7 @@ bot.on('message', async (message) => {
     }
 });
 
+log('starting up');
+
 //start the bot by making it log in to discord.
 bot.login(auth.token);

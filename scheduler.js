@@ -167,7 +167,7 @@ function Scheduler(bot) {
         }
 
         //_id always has a unique index in mongo so this search should always find one record
-        let jobs = await agenda.jobsagenda.jobs({ _id: jobId });
+        let jobs = await agenda.jobs({ _id: jobId });
 
         //there will only be one job to work with due to the _id filter.
         let job = jobs[0];

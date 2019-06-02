@@ -72,7 +72,7 @@ function Scheduler(bot) {
     }
 
     /**
-    * Use this function to snooze a reminder for a user
+    * Use this function to snooze the most recent reminder for a user
     *
     * @param userId the id of the user asking for a reminder to be snoozed
     * @param channel the discord channel this request is coming from
@@ -251,7 +251,7 @@ function Scheduler(bot) {
     }
 
     /**
-    * Use this function to clear all reminders for a user
+    * Use this function to clear all (past and future) reminders for a user
     *
     * @param userId the id of the user asking for their reminders to deleted
     * @param channel the discord channel this request is coming from
@@ -272,7 +272,7 @@ function Scheduler(bot) {
     }
 
     /**
-    * Use this function to clear all reminders for a user
+    * Use this function to clear all active reminders for a user
     *
     * @param userId the id of the user asking for their reminders to deleted
     * @param channel the discord channel this request is coming from

@@ -17,8 +17,8 @@ const helpmsg =
     "You can snooze all the reminders you have received by typing **!snoozeall [for a time / until a time in the future]**\n" +
     "You can remove the most recent reminder you received by typing **!clear**\n" +
     "You can remove all the reminders you have received by typing **!clearall**\n" +
-    "You can list all your upcoming reminders by typing **!list**\n" + 
-    "You can remove _all_ your reminders by typing **!forgetme**";
+    "You can list your upcoming reminders by typing **!list**\n" + 
+    "You can remove all your reminders by typing **!forgetme**";
 
 /**
  * Error handler

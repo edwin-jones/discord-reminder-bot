@@ -6,7 +6,6 @@
 const log = require('debug')('reminder-bot');
 const discord = require('discord.js');
 const Scheduler = require('./scheduler');
-const parser = require('./parser');
 
 const auth = require('./auth.json'); //you need to make this file yourself!
 
@@ -15,7 +14,9 @@ const helpmsg =
     "You can see this message again by typing **!help**\n" +
     "You can set a reminder for yourself by typing **!remindme [about a thing] [at a time in the future]**\n" +
     "You can snooze the most recent reminder you received by typing **!snooze [for a time / until a time in the future]**\n" +
-    "You can remove the most recent reminder you received by typing **!remove**\n" +
+    "You can snooze all the reminders you have received by typing **!snooze [for a time / until a time in the future]**\n" +
+    "You can remove the most recent reminder you received by typing **!clear**\n" +
+    "You can remove all the reminders you have received by typing **!clearall**\n" +
     "You can list all your upcoming reminders by typing **!list**\n" + 
     "You can remove all your reminders by typing **!forgetme**";
 
@@ -76,16 +77,24 @@ bot.on('message', async (message) => {
                     await scheduler.snoozeReminder(message.author.id, message.channel, parameters);
                     break;
 
+                case 'snoozeall':
+                    await scheduler.snoozeReminders(message.author.id, message.channel, parameters);
+                    break;
+
                 case 'list':
                     await scheduler.listReminders(message.author.id, message.channel);
                     break;
 
-                case 'remove':
-                    await scheduler.clearReminder(message.author.id, message.channel);
+                case 'clear':
+                    await scheduler.clearActiveReminder(message.author.id, message.channel);
+                    break;
+
+                case 'clearall':
+                    await scheduler.clearActiveReminders(message.author.id, message.channel);
                     break;
 
                 case 'forgetme':
-                    await scheduler.clearReminders(message.author.id, message.channel);
+                    await scheduler.clearAllReminders(message.author.id, message.channel);
                     break;
             }
         }

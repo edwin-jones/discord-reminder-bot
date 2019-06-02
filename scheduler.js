@@ -23,12 +23,12 @@ const dateFormatString = "dddd, MMMM Do, YYYY [at] hh:mm:ss A"
 function Scheduler(bot) {
 
     /**
-    * Use this function to get the id of the most recent job for a user
+    * Use this function to get the id of the most recent reminder for a user
     *
     * @param userId the id of a user
     * @returns The job id of the latest job for the given user, or null if none exist
     */
-    let getLatestJobId = async function getLatestJobId(userId) {
+    let getLatestReminderId = async function getLatestReminderId(userId) {
 
         //find the most recently run reminder job for a user.
         //we have to do this with a raw mongo query so we can sort and limit.
@@ -72,7 +72,7 @@ function Scheduler(bot) {
     }
 
     /**
-    * Use this function to set a reminder for a user
+    * Use this function to snooze a reminder for a user
     *
     * @param userId the id of the user asking for a reminder to be snoozed
     * @param channel the discord channel this request is coming from
@@ -90,7 +90,7 @@ function Scheduler(bot) {
 
         let reminderTime = moment(reminderDate);
 
-        let jobId = await getLatestJobId(userId);
+        let jobId = await getLatestReminderId(userId);
 
         if (jobId == null) {
             await channel.send(`You have no reminders to snooze **<@${userId}>**`);
@@ -118,6 +118,48 @@ function Scheduler(bot) {
     }
 
     /**
+    * Use this function to snooze all active reminders for a user
+    *
+    * @param userId the id of the user asking for reminders to be snoozed
+    * @param channel the discord channel this request is coming from
+    * @param {String} message the message from the user containing the snooze time
+    */
+    this.snoozeReminders = async function (userId, channel, message) {
+
+        if (!parser.validSnoozeString(message)) {
+
+            await channel.send(genericParserErrorMessage);
+            return;
+        }
+
+        let reminderDate = parser.getDateFromSnoozeString(message);
+
+        agenda.jobs({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $eq: null } }, async (err, jobs) => {
+
+            if (err) {
+
+                await channel.send(genericSchedulerErrorMessage);
+                return;
+            }
+            else if (jobs.length === 0) {
+
+                await channel.send(`You have no reminders to snooze **<@${userId}>**`);
+                return;
+            }
+            else {
+                for (let job of jobs) {
+                    job.schedule(reminderDate);
+                    job.save();
+                }
+
+                await channel.send(`OK **<@${userId}>**, I have snoozed ${jobs.length} active reminders for you`);
+            }
+
+            log(`snoozeall reminders request processed for user ${userId}`);
+        });
+    }
+
+    /**
     * Use this function to list all upcoming reminders for a user
     *
     * @param userId the id of the user asking for a list of their reminders
@@ -128,7 +170,7 @@ function Scheduler(bot) {
         agenda.jobs({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $ne: null } }, async (err, jobs) => {
 
             if (err) {
-
+                log(`list reminders failed due to error: ${err}`);
                 await channel.send(genericSchedulerErrorMessage);
                 return;
             }
@@ -149,7 +191,6 @@ function Scheduler(bot) {
 
                 for (let job of jobs) {
 
-                    let id = job.attrs._id;
                     let nextRunAt = moment(job.attrs.nextRunAt);
                     let reminder = job.attrs.data.reminder;
 
@@ -171,9 +212,9 @@ function Scheduler(bot) {
     * @param userId the id of the user asking for a reminder to be removed
     * @param channel the discord channel this request is coming from
     */
-    this.clearReminder = async function (userId, channel) {
+    this.clearActiveReminder = async function (userId, channel) {
 
-        let jobId = await getLatestJobId(userId);
+        let jobId = await getLatestReminderId(userId);
         if (jobId == null) {
             await channel.send(`You have no reminders to remove **<@${userId}>**`);
             return;
@@ -215,22 +256,43 @@ function Scheduler(bot) {
     * @param userId the id of the user asking for their reminders to deleted
     * @param channel the discord channel this request is coming from
     */
-    this.clearReminders = async function (userId, channel) {
+    this.clearAllReminders = async function (userId, channel) {
 
         agenda.cancel({ name: reminderJobName, 'data.userId': userId }, async (err, numRemoved) => {
 
-            let message = `Whups, something very bad happened. Please try again later.`;
-
             if (err) {
-                message = `I couldn't remove your reminders **<@${userId}>**, please try again later.`
+                log(`delete all reminders request failed for user ${userId} because: ${err}`);
+                await channel.send(`I couldn't remove your reminders **<@${userId}>**, please try again later.`)
             }
             else {
-                message = `I have removed all ${numRemoved} of your reminders **<@${userId}>**`
+                log(`delete all reminders request processed for user ${userId}`);
+                await channel.send(`I have removed all ${numRemoved} of your reminders **<@${userId}>**`)
             }
+        });
+    }
 
-            await channel.send(message);
+    /**
+    * Use this function to clear all reminders for a user
+    *
+    * @param userId the id of the user asking for their reminders to deleted
+    * @param channel the discord channel this request is coming from
+    */
+    this.clearActiveReminders = async function (userId, channel) {
 
-            log(`delete reminders request processed for user ${userId}`);
+        agenda.cancel({ name: reminderJobName, 'data.userId': userId, nextRunAt: { $eq: null } }, async (err, numRemoved) => {
+
+            if (err) {
+                log(`delete active reminders request failed for user ${userId} because: ${err}`);
+                await channel.send(`I couldn't remove your reminders **<@${userId}>**, please try again later.`)
+                return;
+            }
+            else if (numRemoved === 0) {
+                await channel.send(`You have no reminders to remove **<@${userId}>**`);
+            }
+            else {
+                await channel.send(`I have removed all ${numRemoved} of your active reminders **<@${userId}>**`)
+            }
+            log(`delete active reminders request processed for user ${userId}`);
         });
     }
 
